@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { register, login, whoami, updateProfile } from "../controllers/user.controller";
+import {
+  register,
+  login,
+  whoami,
+  updateProfile,
+} from "../controllers/user.controller";
 import { authorizedMiddleware } from "../middlewares/authorized.middleware";
 import { uploadProfileImage } from "../middlewares/upload.middleware";
 
@@ -35,7 +40,18 @@ router.patch(
   "/update-profile",
   authorizedMiddleware,
   uploadProfileImage,
-  updateProfile
+  updateProfile,
 );
 
-export default router;
+/**
+ 
+  PATCH /api/users/profile-update
+ */
+router.patch(
+  "/profile-update",
+  authorizedMiddleware,
+  uploadProfileImage,
+  updateProfile,
+);
+
+export default router;

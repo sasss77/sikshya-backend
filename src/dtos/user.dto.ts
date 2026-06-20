@@ -35,6 +35,11 @@ export const SignupSchema = z.object({
   }),
 
   password: passwordSchema,
+
+  phoneNumber: z
+    .string()
+    .regex(/^\+?[0-9\s\-()]{7,15}$/, "Invalid phone number format")
+    .optional(),
 });
 
 /**
@@ -75,7 +80,4 @@ export const UpdateProfileSchema = z
       return true;
     },
     { message: "Passwords do not match", path: ["confirmPassword"] }
-  )
-  .refine((data) => Object.keys(data).length > 0, {
-    message: "At least one field must be provided to update",
-  });
+  );

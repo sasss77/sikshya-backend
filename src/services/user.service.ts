@@ -19,7 +19,7 @@ export const registerUser = async (data: unknown) => {
   // 1. Validate input
   const validatedData = SignupSchema.parse(data);
 
-  const { fullName, email, role, password } = validatedData;
+  const { fullName, email, role, password, phoneNumber } = validatedData;
 
   // 2. Check if user exists (via repository)
   const existingUser = await findUserByEmail(email);
@@ -38,6 +38,7 @@ export const registerUser = async (data: unknown) => {
     email,
     role,
     password: hashedPassword,
+    ...(phoneNumber && { phoneNumber }),
   });
 
   // 5. Return safe response
@@ -46,6 +47,7 @@ export const registerUser = async (data: unknown) => {
     fullName: user.fullName,
     email: user.email,
     role: user.role,
+    phoneNumber: user.phoneNumber ?? null,
   };
 };
 
