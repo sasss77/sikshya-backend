@@ -33,7 +33,7 @@ const userSchema = new Schema<IUserDocument>(
 
     role: {
       type: String,
-      enum: ["student", "tutor"],
+      enum: ["student", "tutor", "admin"],
       required: true,
     },
 

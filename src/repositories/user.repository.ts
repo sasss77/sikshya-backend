@@ -23,4 +23,41 @@ export const updateUserById = async (id: string, data: Record<string, any>) => {
     { $set: data },
     { new: true, runValidators: true }
   );
-};
+};
+
+export const findPaginatedUsers = async (page: number, limit: number, search: string) => {
+  const query: any = {};
+  if (search) {
+    query.$or = [
+      { fullName: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  const skip = (page - 1) * limit;
+  const total = await UserModel.countDocuments(query);
+  const users = await UserModel.find(query).skip(skip).limit(limit).sort({ createdAt: -1 });
+
+  return {
+    data: users.map(user => ({
+      id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      phoneNumber: user.phoneNumber,
+      profileImage: user.profileImage,
+      createdAt: (user as any).createdAt,
+      updatedAt: (user as any).updatedAt,
+    })),
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    }
+  };
+};
+
+export const deleteUserById = async (id: string) => {
+  return await UserModel.findByIdAndDelete(id);
+};
