@@ -30,8 +30,8 @@ export const SignupSchema = z.object({
 
   email: z.string().email("Invalid email format"),
 
-  role: z.enum(["student", "tutor"], {
-    error: "Role must be student or tutor",
+  role: z.enum(["student", "tutor", "admin"], {
+    error: "Role must be student, tutor, or admin",
   }),
 
   password: passwordSchema,
