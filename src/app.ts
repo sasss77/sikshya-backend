@@ -4,6 +4,7 @@ import morgan from "morgan";
 import path from "path";
 
 import userRoutes from "./routes/user.route";
+import adminUserRoutes from "./routes/admin.user.route";
 import { errorMiddleware } from "./middlewares/errror.middleware";
 
 const app = express();
@@ -32,6 +33,7 @@ app.get("/", (_, res) => {
  * Routes
  */
 app.use("/api/users", userRoutes);
+app.use("/api/v1/admin/users", adminUserRoutes);
 
 /**
  * Global Error Handler (MUST be last)
