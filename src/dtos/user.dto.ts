@@ -68,6 +68,8 @@ export const UpdateProfileSchema = z
       .regex(/^\+?[0-9\s\-()]{7,15}$/, "Invalid phone number format")
       .optional(),
 
+    oldPassword: z.string().optional(),
+
     password: passwordSchema.optional(),
 
     confirmPassword: z.string().optional(),
@@ -80,4 +82,13 @@ export const UpdateProfileSchema = z
       return true;
     },
     { message: "Passwords do not match", path: ["confirmPassword"] }
+  )
+  .refine(
+    (data) => {
+      if (data.password && !data.oldPassword) {
+        return false;
+      }
+      return true;
+    },
+    { message: "Current password is required to set a new password", path: ["oldPassword"] }
   );

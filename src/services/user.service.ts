@@ -132,7 +132,7 @@ export const updateMyProfile = async (
   // 1. Validate body fields
   const validatedData = UpdateProfileSchema.parse(data);
 
-  const { fullName, phoneNumber, password } = validatedData;
+  const { fullName, phoneNumber, password, oldPassword } = validatedData;
 
   // 2. Build update payload
   const updatePayload: Record<string, any> = {};
@@ -141,7 +141,16 @@ export const updateMyProfile = async (
   if (phoneNumber) updatePayload.phoneNumber = phoneNumber;
 
   // 3. Hash new password if provided
-  if (password) {
+  if (password && oldPassword) {
+    const user = await findUserById(userId);
+    if (!user) {
+      throw new HttpException(404, "User not found");
+    }
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      throw new HttpException(400, "Current password is incorrect");
+    }
+    
     const salt = await bcrypt.genSalt(10);
     updatePayload.password = await bcrypt.hash(password, salt);
   }
