@@ -11,6 +11,7 @@ export interface IUserDocument extends Document {
   password: string;
   phoneNumber?: string;
   profileImage?: string;
+  isVerifiedStudent: boolean;
 }
 
 //  schema
@@ -52,6 +53,11 @@ const userSchema = new Schema<IUserDocument>(
     profileImage: {
       type: String,
       default: null,
+    },
+
+    isVerifiedStudent: {
+      type: Boolean,
+      default: false,
     },
   },
   {
