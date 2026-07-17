@@ -116,6 +116,7 @@ export const getMyProfile = async (userId: string) => {
     role: user.role,
     phoneNumber: user.phoneNumber ?? null,
     profileImage: user.profileImage ?? null,
+    isVerifiedStudent: user.isVerifiedStudent ?? false,
     createdAt: (user as any).createdAt,
     updatedAt: (user as any).updatedAt,
   };

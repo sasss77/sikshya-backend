@@ -12,6 +12,11 @@ if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
+const COURSE_UPLOAD_DIR = path.join(process.cwd(), "uploads", "courses");
+if (!fs.existsSync(COURSE_UPLOAD_DIR)) {
+  fs.mkdirSync(COURSE_UPLOAD_DIR, { recursive: true });
+}
+
 /**
  * Disk storage config — saves to uploads/profiles/<timestamp>-<originalname>
  */
@@ -49,3 +54,24 @@ export const uploadProfileImage = multer({
   fileFilter,
   limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB
 }).single("profileImage");
+
+/**
+ * Course content storage config
+ */
+const courseStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, COURSE_UPLOAD_DIR);
+  },
+  filename: (_req, file, cb) => {
+    const uniqueName = `${Date.now()}-${file.originalname.replace(/\s+/g, "_")}`;
+    cb(null, uniqueName);
+  },
+});
+
+/**
+ * Course content multer instance — 50 MB limit, single field "courseFile"
+ */
+export const uploadCourseContent = multer({
+  storage: courseStorage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+}).single("courseFile");
