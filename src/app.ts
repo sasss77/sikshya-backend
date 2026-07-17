@@ -5,6 +5,10 @@ import path from "path";
 
 import userRoutes from "./routes/user.route";
 import adminUserRoutes from "./routes/admin.user.route";
+import studentRoutes from "./routes/student.route";
+import tutorRoutes from "./routes/tutor.route";
+import bookingRoutes from "./routes/booking.route";
+import notificationRoutes from "./routes/notification.route";
 import { errorMiddleware } from "./middlewares/errror.middleware";
 
 const app = express();
@@ -34,6 +38,10 @@ app.get("/", (_, res) => {
  */
 app.use("/api/users", userRoutes);
 app.use("/api/v1/admin/users", adminUserRoutes);
+app.use("/api/students", studentRoutes);
+app.use("/api/tutors", tutorRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 /**
  * Global Error Handler (MUST be last)
