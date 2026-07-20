@@ -79,6 +79,7 @@ export const bookSession = async (studentId: string, data: unknown) => {
     duration: validated.duration,
     price: tutorProfile.hourlyRate,
     notes: validated.notes,
+    courseId: validated.courseId,
   });
 
   // Notify tutor

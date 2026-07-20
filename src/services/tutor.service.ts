@@ -228,7 +228,7 @@ export const addModuleContent = async (
   if (!profile) throw new HttpException(404, "Course or module not found");
   
   const course = (profile.courses as any[]).find((c: any) => c._id.toString() === courseId);
-  return course?.modules[moduleIndex]?.contents || [];
+  return course?.modules || [];
 };
 
 /** DELETE content from a module */
@@ -246,5 +246,5 @@ export const deleteModuleContent = async (
   if (!profile) throw new HttpException(404, "Course, module, or content not found");
   
   const course = (profile.courses as any[]).find((c: any) => c._id.toString() === courseId);
-  return course?.modules[moduleIndex]?.contents || [];
+  return course?.modules || [];
 };
