@@ -20,6 +20,8 @@ export const CreateBookingSchema = z.object({
   duration: z.string().default("60 min"),
 
   notes: z.string().trim().optional(),
+
+  courseId: z.string().optional(),
 });
 
 /**
