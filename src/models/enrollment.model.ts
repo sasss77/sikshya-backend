@@ -18,7 +18,7 @@ export interface IEnrollmentTopic {
 export interface IEnrollmentDocument extends Document {
   studentId: mongoose.Types.ObjectId;
   tutorId: mongoose.Types.ObjectId;
-  bookingId: mongoose.Types.ObjectId;
+  bookingId?: mongoose.Types.ObjectId;
   subject: string;
   totalSessions: number;
   completedSessions: number;
@@ -26,6 +26,8 @@ export interface IEnrollmentDocument extends Document {
   nextSession: string | null; // human-readable e.g. "Jul 18, 10:00 AM"
   status: EnrollmentStatus;
   topics: IEnrollmentTopic[];
+  courseId?: mongoose.Types.ObjectId;
+  completedModules: string[];
 }
 
 const enrollmentTopicSchema = new Schema<IEnrollmentTopic>(
@@ -51,11 +53,14 @@ const enrollmentSchema = new Schema<IEnrollmentDocument>(
     bookingId: {
       type: Schema.Types.ObjectId,
       ref: "Booking",
-      required: true,
-      unique: true, // one enrollment per booking
+      // Optional, since a user can add a course without booking
+    },
+    courseId: {
+      type: Schema.Types.ObjectId,
+      ref: "TutorProfile.courses",
     },
     subject: { type: String, required: true, trim: true },
-    totalSessions: { type: Number, default: 1, min: 1 },
+    totalSessions: { type: Number, default: 1, min: 0 },
     completedSessions: { type: Number, default: 0, min: 0 },
     progress: { type: Number, default: 0, min: 0, max: 100 },
     nextSession: { type: String, default: null },
@@ -65,6 +70,7 @@ const enrollmentSchema = new Schema<IEnrollmentDocument>(
       default: "not_started",
     },
     topics: { type: [enrollmentTopicSchema], default: [] },
+    completedModules: { type: [String], default: [] },
   },
   { timestamps: true }
 );

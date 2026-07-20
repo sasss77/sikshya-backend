@@ -19,6 +19,7 @@ export interface IBookingDocument extends Document {
   status: BookingStatus;
   notes?: string;
   cancelReason?: string;
+  courseId?: mongoose.Types.ObjectId;
 }
 
 const bookingSchema = new Schema<IBookingDocument>(
@@ -45,6 +46,10 @@ const bookingSchema = new Schema<IBookingDocument>(
     },
     notes: { type: String, trim: true },
     cancelReason: { type: String, trim: true },
+    courseId: {
+      type: Schema.Types.ObjectId,
+      ref: "TutorProfile.courses",
+    },
   },
   { timestamps: true }
 );
