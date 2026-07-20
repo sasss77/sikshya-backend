@@ -14,12 +14,15 @@ export const createBooking = async (data: {
   duration: string;
   price: number;
   notes?: string;
+  courseId?: string;
 }) => {
-  return await BookingModel.create({
+  const doc: any = {
     ...data,
     studentId: new mongoose.Types.ObjectId(data.studentId),
     tutorId: new mongoose.Types.ObjectId(data.tutorId),
-  });
+  };
+  if (data.courseId) doc.courseId = new mongoose.Types.ObjectId(data.courseId);
+  return await BookingModel.create(doc);
 };
 
 export const findBookingById = async (id: string) => {
@@ -54,3 +57,17 @@ export const updateBookingStatus = async (
 
   return await BookingModel.findByIdAndUpdate(id, { $set: update }, { new: true });
 };
+
+/**
+ * Find all unique students that have an accepted (upcoming/completed) booking with a tutor.
+ * Used by tutors to know which students they can send notifications to.
+ */
+export const findStudentsByTutorId = async (tutorId: string) => {
+  return await BookingModel.find({
+    tutorId: new mongoose.Types.ObjectId(tutorId),
+    status: { $in: ["upcoming", "completed"] },
+  })
+    .populate("studentId", "fullName email profileImage")
+    .sort({ createdAt: -1 });
+};
+
