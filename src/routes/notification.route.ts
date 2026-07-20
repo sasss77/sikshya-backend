@@ -4,6 +4,8 @@ import {
   markReadController,
   markAllReadController,
   clearAllController,
+  getMyStudentsController,
+  sendNotificationController,
 } from "../controllers/notification.controller";
 import { authorizedMiddleware } from "../middlewares/authorized.middleware";
 
@@ -37,5 +39,17 @@ router.delete("/clear-all", clearAllController);
  * PATCH /api/notifications/:id/read
  */
 router.patch("/:id/read", markReadController);
+
+/**
+ * GET MY STUDENTS (Tutor only)
+ * GET /api/notifications/my-students
+ */
+router.get("/my-students", getMyStudentsController);
+
+/**
+ * SEND NOTIFICATION TO STUDENT (Tutor only)
+ * POST /api/notifications/send
+ */
+router.post("/send", sendNotificationController);
 
 export default router;
