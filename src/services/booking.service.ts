@@ -6,6 +6,8 @@ import {
   findBookingsByStudentId,
   findBookingsByTutorId,
   updateBookingStatus,
+  expireStaleBookings,
+  completeStaleUpcomingSessions,
 } from "../repositories/booking.repository";
 import { findTutorProfileByUserId } from "../repositories/tutor.repository";
 import { findUserById } from "../repositories/user.repository";
@@ -99,6 +101,10 @@ export const bookSession = async (studentId: string, data: unknown) => {
  * Returns bookings for the logged-in user (student or tutor).
  */
 export const getMyBookings = async (userId: string, role: string) => {
+  // Lazily expire stale pending bookings and auto-complete past upcoming sessions
+  await expireStaleBookings();
+  await completeStaleUpcomingSessions();
+
   const bookings =
     role === "tutor"
       ? await findBookingsByTutorId(userId)
