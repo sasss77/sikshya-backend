@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { verifyStudent, getStudentProfile, getStudentDashboard } from "../services/student.service";
+import { verifyStudent, getStudentProfile, getStudentDashboard, getPublicStudentProfile } from "../services/student.service";
 
 /**
  * VERIFY STUDENT CONTROLLER
@@ -66,6 +66,30 @@ export const getStudentDashboardController = async (
     res.status(200).json({
       success: true,
       message: "Student dashboard fetched successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET STUDENT BY ID CONTROLLER (PUBLIC PROFILE)
+ * GET /api/students/:id
+ * Public or Protected depending on route
+ */
+export const getStudentByIdController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const result = await getPublicStudentProfile(id);
+
+    res.status(200).json({
+      success: true,
+      message: "Student profile fetched successfully",
       data: result,
     });
   } catch (error) {

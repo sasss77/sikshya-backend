@@ -1,12 +1,12 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-export type BookingStatus = "pending" | "upcoming" | "completed" | "cancelled";
+export type BookingStatus = "pending" | "upcoming" | "completed" | "cancelled" | "expired";
 
 /**
  * Booking Document Interface
  * Created when a student books a session with a tutor.
  * Status flow: pending → upcoming → completed
- *                     ↘ cancelled
+ *                     ↘ cancelled / expired
  */
 export interface IBookingDocument extends Document {
   studentId: mongoose.Types.ObjectId;
@@ -41,7 +41,7 @@ const bookingSchema = new Schema<IBookingDocument>(
     price: { type: Number, required: true, min: 0 },
     status: {
       type: String,
-      enum: ["pending", "upcoming", "completed", "cancelled"],
+      enum: ["pending", "upcoming", "completed", "cancelled", "expired"],
       default: "pending",
     },
     notes: { type: String, trim: true },
