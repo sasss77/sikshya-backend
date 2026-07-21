@@ -50,9 +50,9 @@ export const findPaginatedUsers = async (page: number, limit: number, search: st
       updatedAt: (user as any).updatedAt,
     })),
     meta: {
-      page,
-      limit,
-      total,
+      currentPage: page,
+      itemsPerPage: limit,
+      totalItems: total,
       totalPages: Math.ceil(total / limit),
     }
   };
