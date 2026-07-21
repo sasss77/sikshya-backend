@@ -5,6 +5,10 @@ import {
   createUserService,
   updateUserService,
   deleteUserService,
+  getAdminStatsService,
+  sendAdminNotificationService,
+  getAdminRequestsService,
+  verifyAdminService,
 } from "../services/admin.user.service";
 
 export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
@@ -73,6 +77,58 @@ export const deleteUser = async (req: Request, res: Response, next: NextFunction
     res.status(200).json({
       success: true,
       message: "User deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAdminStats = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await getAdminStatsService();
+    res.status(200).json({
+      success: true,
+      message: "Admin stats fetched successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const sendAdminNotification = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { audience, title, message } = req.body;
+    await sendAdminNotificationService(audience, title, message);
+    res.status(200).json({
+      success: true,
+      message: "Notifications sent successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAdminRequests = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await getAdminRequestsService();
+    res.status(200).json({
+      success: true,
+      message: "Admin requests fetched successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const verifyAdmin = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    await verifyAdminService(id);
+    res.status(200).json({
+      success: true,
+      message: "Admin verified successfully",
     });
   } catch (error) {
     next(error);
