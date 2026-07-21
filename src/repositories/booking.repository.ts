@@ -58,6 +58,37 @@ export const updateBookingStatus = async (
   return await BookingModel.findByIdAndUpdate(id, { $set: update }, { new: true });
 };
 
+export const expireStaleBookings = async () => {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  await BookingModel.updateMany(
+    {
+      status: "pending",
+      createdAt: { $lt: oneHourAgo },
+    },
+    {
+      $set: { status: "expired" },
+    }
+  );
+};
+
+/**
+ * Auto-complete UPCOMING sessions whose scheduled time has already passed.
+ * Since we store day-of-week + time (not an exact date), we use createdAt as
+ * a proxy: if an accepted session is older than 24 hours it has certainly happened.
+ */
+export const completeStaleUpcomingSessions = async () => {
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  await BookingModel.updateMany(
+    {
+      status: "upcoming",
+      createdAt: { $lt: oneDayAgo },
+    },
+    {
+      $set: { status: "completed" },
+    }
+  );
+};
+
 /**
  * Find all unique students that have an accepted (upcoming/completed) booking with a tutor.
  * Used by tutors to know which students they can send notifications to.
