@@ -85,7 +85,7 @@ export const getStudentByIdController = async (
 ) => {
   try {
     const { id } = req.params;
-    const result = await getPublicStudentProfile(id);
+    const result = await getPublicStudentProfile(id as string);
 
     res.status(200).json({
       success: true,

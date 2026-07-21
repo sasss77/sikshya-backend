@@ -170,6 +170,6 @@ export const getPublicStudentProfile = async (userId: string) => {
     gradeLevel: profile?.gradeLevel || "Unknown",
     subjects: profile?.subjects || [],
     bio: profile?.bio || "No bio provided.",
-    joinedAt: user.createdAt,
+    joinedAt: (user as any).createdAt,
   };
 };
