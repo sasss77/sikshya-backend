@@ -13,6 +13,7 @@ import {
   addModuleContent,
   deleteModuleContent,
 } from "../services/tutor.service";
+import { getBookedSlotsService } from "../services/admin.user.service";
 
 /**
  * LIST ALL TUTORS
@@ -63,6 +64,29 @@ export const getTutorById = async (
     res.status(200).json({
       success: true,
       message: "Tutor profile fetched successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET BOOKED SLOTS FOR A TUTOR
+ * GET /api/tutors/:id/booked-slots
+ * Public
+ */
+export const getBookedSlots = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const result = await getBookedSlotsService(String(req.params.id));
+
+    res.status(200).json({
+      success: true,
+      message: "Booked slots fetched successfully",
       data: result,
     });
   } catch (error) {

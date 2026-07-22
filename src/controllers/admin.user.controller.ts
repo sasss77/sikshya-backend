@@ -9,6 +9,8 @@ import {
   sendAdminNotificationService,
   getAdminRequestsService,
   verifyAdminService,
+  getAllCoursesService,
+  getAdminCourseByIdService,
 } from "../services/admin.user.service";
 
 export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
@@ -16,8 +18,9 @@ export const getAllUsers = async (req: Request, res: Response, next: NextFunctio
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = req.query.search as string || "";
+    const role = req.query.role as string | undefined;
 
-    const result = await getAllUsersService(page, limit, search);
+    const result = await getAllUsersService(page, limit, search, role);
 
     res.status(200).json(result);
   } catch (error) {
@@ -129,6 +132,33 @@ export const verifyAdmin = async (req: Request, res: Response, next: NextFunctio
     res.status(200).json({
       success: true,
       message: "Admin verified successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllCourses = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await getAllCoursesService();
+    res.status(200).json({
+      success: true,
+      message: "Courses fetched successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAdminCourseById = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const result = await getAdminCourseByIdService(id);
+    res.status(200).json({
+      success: true,
+      message: "Course fetched successfully",
+      data: result,
     });
   } catch (error) {
     next(error);
