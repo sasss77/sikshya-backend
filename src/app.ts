@@ -9,6 +9,7 @@ import studentRoutes from "./routes/student.route";
 import tutorRoutes from "./routes/tutor.route";
 import bookingRoutes from "./routes/booking.route";
 import notificationRoutes from "./routes/notification.route";
+import chatRoutes from "./routes/chat.route";
 import { errorMiddleware } from "./middlewares/errror.middleware";
 
 const app = express();
@@ -42,6 +43,7 @@ app.use("/api/students", studentRoutes);
 app.use("/api/tutors", tutorRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/chat", chatRoutes);
 
 /**
  * Global Error Handler (MUST be last)
