@@ -2,6 +2,10 @@ import bcrypt from "bcryptjs";
 import { AdminCreateUserSchema, AdminUpdateUserSchema } from "../dtos/admin.user.dto";
 import { HttpException } from "../exceptions/http-exception";
 import { NotificationModel } from "../models/notification.model";
+import { StudentProfileModel } from "../models/student-profile.model";
+import { TutorProfileModel } from "../models/tutor-profile.model";
+import { EnrollmentModel } from "../models/enrollment.model";
+import { BookingModel } from "../models/booking.model";
 import { UserModel } from "../models/user.model";
 import {
   createUser,
@@ -12,15 +16,46 @@ import {
   findPaginatedUsers
 } from "../repositories/user.repository";
 
-export const getAllUsersService = async (page: number, limit: number, search: string) => {
-  const result = await findPaginatedUsers(page, limit, search);
+export const getAllUsersService = async (page: number, limit: number, search: string, role?: string) => {
+  const result = await findPaginatedUsers(page, limit, search, role);
   return result;
 };
 
 export const getUserByIdService = async (id: string) => {
   const user = await findUserById(id);
   if (!user) throw new HttpException(404, "User not found");
-  
+  let details: any = null;
+
+  if (user.role === "student") {
+    const profile = await StudentProfileModel.findOne({ userId: id }).lean();
+    const enrollments = await EnrollmentModel.find({ studentId: id }).lean();
+    
+    const enrolledCourseIds = enrollments.map(e => e.courseId).filter(Boolean);
+    const appointedTeacherIds = [...new Set(enrollments.map(e => e.tutorId.toString()))].filter(Boolean);
+    const totalSessionsAttended = enrollments.reduce((acc, curr) => acc + (curr.completedSessions || 0), 0);
+
+    details = {
+      profile,
+      enrolledCoursesCount: enrolledCourseIds.length,
+      appointedTeachersCount: appointedTeacherIds.length,
+      totalSessionsAttended,
+    };
+  } else if (user.role === "tutor") {
+    const profile = await TutorProfileModel.findOne({ userId: id }).lean();
+    const enrollments = await EnrollmentModel.find({ tutorId: id }).lean();
+
+    const totalStudentsTaught = new Set(enrollments.map(e => e.studentId.toString())).size;
+    const totalClassesAttended = enrollments.reduce((acc, curr) => acc + (curr.completedSessions || 0), 0);
+    const totalCourses = profile?.courses?.length || 0;
+
+    details = {
+      profile,
+      totalStudentsTaught,
+      totalClassesAttended,
+      totalCourses,
+    };
+  }
+
   return {
     id: user._id,
     fullName: user.fullName,
@@ -30,6 +65,7 @@ export const getUserByIdService = async (id: string) => {
     profileImage: user.profileImage ?? null,
     createdAt: (user as any).createdAt,
     updatedAt: (user as any).updatedAt,
+    details,
   };
 };
 
@@ -171,4 +207,75 @@ export const verifyAdminService = async (id: string) => {
   await user.save();
 };
 
+/**
+ * GET ALL COURSES (Admin)
+ * Returns all courses from all tutor profiles with tutor info.
+ */
+export const getAllCoursesService = async () => {
+  const profiles = await TutorProfileModel.find(
+    { "courses.0": { $exists: true } },
+    { userId: 1, courses: 1 }
+  ).populate("userId", "fullName email profileImage").lean();
 
+  const result: any[] = [];
+  for (const profile of profiles as any[]) {
+    const tutor = profile.userId;
+    for (const course of profile.courses || []) {
+      result.push({
+        id: course._id,
+        title: course.title,
+        level: course.level,
+        price: course.price,
+        modulesCount: (course.modules || []).length,
+        tutorId: tutor?._id,
+        tutorName: tutor?.fullName || "Unknown",
+        tutorEmail: tutor?.email || "",
+        tutorImage: tutor?.profileImage || null,
+      });
+    }
+  }
+  return result;
+};
+
+/**
+ * GET A SINGLE COURSE BY ID (Admin)
+ */
+export const getAdminCourseByIdService = async (courseId: string) => {
+  const profile = await TutorProfileModel.findOne(
+    { "courses._id": courseId },
+    { userId: 1, "courses.$": 1 }
+  ).populate("userId", "fullName email profileImage").lean();
+
+  if (!profile || !profile.courses || profile.courses.length === 0) {
+    throw new HttpException(404, "Course not found");
+  }
+
+  const tutor = profile.userId as any;
+  const course = profile.courses[0];
+
+  return {
+    id: course._id,
+    title: course.title,
+    level: course.level,
+    price: course.price,
+    modules: course.modules || [],
+    tutorId: tutor?._id,
+    tutorName: tutor?.fullName || "Unknown",
+    tutorEmail: tutor?.email || "",
+    tutorImage: tutor?.profileImage || null,
+  };
+};
+
+/**
+ * GET BOOKED SLOTS FOR A TUTOR
+ * Returns day+time pairs that are already booked (pending or upcoming).
+ * Used by the frontend to grey out unavailable time slots.
+ */
+export const getBookedSlotsService = async (tutorId: string) => {
+  const bookings = await BookingModel.find(
+    { tutorId, status: { $in: ["pending", "upcoming"] } },
+    { day: 1, time: 1 }
+  ).lean();
+
+  return bookings.map((b: any) => ({ day: b.day, time: b.time }));
+};
