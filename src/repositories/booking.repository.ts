@@ -60,35 +60,59 @@ export const updateBookingStatus = async (
   return await BookingModel.findByIdAndUpdate(id, { $set: update }, { new: true });
 };
 
-export const expireStaleBookings = async () => {
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-  await BookingModel.updateMany(
-    {
-      status: "pending",
-      createdAt: { $lt: oneHourAgo },
-    },
-    {
-      $set: { status: "expired" },
-    }
-  );
-};
+const DAY_MAP: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
-/**
- * Auto-complete UPCOMING sessions whose scheduled time has already passed.
- * Since we store day-of-week + time (not an exact date), we use createdAt as
- * a proxy: if an accepted session is older than 24 hours it has certainly happened.
- */
-export const completeStaleUpcomingSessions = async () => {
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  await BookingModel.updateMany(
-    {
-      status: "upcoming",
-      createdAt: { $lt: oneDayAgo },
-    },
-    {
-      $set: { status: "completed" },
+function calculateSessionEndTime(createdAt: Date, dayStr: string, timeStr: string, durationStr: string = "60 min"): Date {
+  const targetDay = DAY_MAP[dayStr] ?? 1;
+  const createdDay = createdAt.getDay();
+  let daysDiff = targetDay - createdDay;
+  if (daysDiff < 0) daysDiff += 7;
+
+  const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  let hours = 9, minutes = 0;
+  if (match) {
+    hours = parseInt(match[1], 10);
+    minutes = parseInt(match[2], 10);
+    const period = match[3].toUpperCase();
+    if (period === "PM" && hours !== 12) hours += 12;
+    if (period === "AM" && hours === 12) hours = 0;
+  }
+
+  if (daysDiff === 0) {
+    const createdTotalMinutes = createdAt.getHours() * 60 + createdAt.getMinutes();
+    const targetTotalMinutes = hours * 60 + minutes;
+    if (targetTotalMinutes < createdTotalMinutes) {
+      daysDiff = 7;
     }
-  );
+  }
+
+  const sessionDate = new Date(createdAt);
+  sessionDate.setDate(sessionDate.getDate() + daysDiff);
+  sessionDate.setHours(hours, minutes, 0, 0);
+
+  const durationMatch = durationStr.match(/\d+/);
+  const durationMins = durationMatch ? parseInt(durationMatch[0], 10) : 60;
+  
+  // expire 1 hour AFTER the session ends
+  sessionDate.setMinutes(sessionDate.getMinutes() + durationMins + 60);
+
+  return sessionDate;
+}
+
+export const processStaleBookings = async () => {
+  const activeBookings = await BookingModel.find({ status: { $in: ["pending", "upcoming"] } });
+  const now = new Date();
+  
+  for (const booking of activeBookings) {
+    const endTime = calculateSessionEndTime(booking.createdAt, booking.day, booking.time, booking.duration);
+    console.log(`[Stale Check] Booking ${booking._id}: Created at ${booking.createdAt}, Target Day ${booking.day}, Target Time ${booking.time}`);
+    console.log(`[Stale Check] Computed End Time: ${endTime.toISOString()}, Now: ${now.toISOString()}`);
+    if (now > endTime) {
+      console.log(`[Stale Check] Expiring booking ${booking._id} because it's past end time.`);
+      // Both pending and upcoming that passed get marked as expired
+      await BookingModel.updateOne({ _id: booking._id }, { $set: { status: "expired" } });
+    }
+  }
 };
 
 /**
