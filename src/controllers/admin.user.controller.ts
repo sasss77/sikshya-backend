@@ -128,7 +128,7 @@ export const getAdminRequests = async (req: Request, res: Response, next: NextFu
 export const verifyAdmin = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    await verifyAdminService(id);
+    await verifyAdminService(id as string);
     res.status(200).json({
       success: true,
       message: "Admin verified successfully",
@@ -154,7 +154,7 @@ export const getAllCourses = async (req: Request, res: Response, next: NextFunct
 export const getAdminCourseById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const result = await getAdminCourseByIdService(id);
+    const result = await getAdminCourseByIdService(id as string);
     res.status(200).json({
       success: true,
       message: "Course fetched successfully",
