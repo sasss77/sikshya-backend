@@ -18,6 +18,24 @@ import {
 
 export const getAllUsersService = async (page: number, limit: number, search: string, role?: string) => {
   const result = await findPaginatedUsers(page, limit, search, role);
+  
+  // Attach profiles for tutors
+  const tutorIds = result.data.filter(u => u.role === "tutor").map(u => u.id);
+  if (tutorIds.length > 0) {
+    const profiles = await TutorProfileModel.find({ userId: { $in: tutorIds } }).lean();
+    const profileMap = new Map(profiles.map(p => [p.userId.toString(), p]));
+    
+    result.data = result.data.map(u => {
+      if (u.role === "tutor") {
+        return {
+          ...u,
+          profile: profileMap.get(u.id.toString()) || null
+        };
+      }
+      return u;
+    });
+  }
+
   return result;
 };
 

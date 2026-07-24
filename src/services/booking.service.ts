@@ -6,13 +6,13 @@ import {
   findBookingsByStudentId,
   findBookingsByTutorId,
   updateBookingStatus,
-  expireStaleBookings,
-  completeStaleUpcomingSessions,
+  processStaleBookings,
 } from "../repositories/booking.repository";
 import { findTutorProfileByUserId } from "../repositories/tutor.repository";
 import { findUserById } from "../repositories/user.repository";
 import { createEnrollmentFromBooking } from "./enrollment.service";
 import { notifyUser } from "./notification.service";
+import { createMeetSession } from "./google-calendar.service";
 
 /**
  * Helper to format a booking document into a clean response
@@ -102,9 +102,8 @@ export const bookSession = async (studentId: string, data: unknown) => {
  * Returns bookings for the logged-in user (student or tutor).
  */
 export const getMyBookings = async (userId: string, role: string) => {
-  // Lazily expire stale pending bookings and auto-complete past upcoming sessions
-  await expireStaleBookings();
-  await completeStaleUpcomingSessions();
+  // Lazily expire stale pending and upcoming bookings
+  await processStaleBookings();
 
   const bookings =
     role === "tutor"
@@ -166,9 +165,27 @@ export const changeBookingStatus = async (
 
   let meetLink: string | undefined = undefined;
   if (status === "upcoming") {
-    // Generate a simulated Google Meet link: e.g. abc-defg-hij
-    const randomSegment = (len: number) => Math.random().toString(36).substring(2, 2 + len);
-    meetLink = `https://meet.google.com/${randomSegment(3)}-${randomSegment(4)}-${randomSegment(3)}`;
+    try {
+      const student = await findUserById(studentId);
+      const tutor = await findUserById(tutorId);
+
+      const meetSession = await createMeetSession(
+        student?.fullName || "Student",
+        tutor?.fullName || "Tutor",
+        booking.subject,
+        booking.day,
+        booking.time,
+        student?.email,
+        tutor?.email
+      );
+      meetLink = meetSession.meetLink;
+      console.log(`[Google Calendar] Meet link created: ${meetLink}`);
+    } catch (err: any) {
+      // Fall back to a placeholder link so booking still completes
+      console.error(`[Google Calendar] Failed to create Meet link: ${err.message}`);
+      const randomSegment = (len: number) => Math.random().toString(36).substring(2, 2 + len);
+      meetLink = `https://meet.google.com/${randomSegment(3)}-${randomSegment(4)}-${randomSegment(3)}`;
+    }
   }
 
   const updated = await updateBookingStatus(bookingId, status, cancelReason, meetLink);
@@ -176,13 +193,21 @@ export const changeBookingStatus = async (
   // Auto-create enrollment when tutor accepts
   if (status === "upcoming") {
     await createEnrollmentFromBooking(booking);
-    
-    // Notify student that it was accepted
+
+    // Notify student with the Meet link
     await notifyUser(
       studentId,
       "booking",
-      "Booking Accepted",
-      `Your booking for ${booking.subject} on ${booking.day} at ${booking.time} has been accepted!`
+      "✅ Booking Accepted!",
+      `Your ${booking.subject} session on ${booking.day} at ${booking.time} has been accepted! Join via Google Meet: ${meetLink}`
+    );
+
+    // Notify tutor with the Meet link
+    await notifyUser(
+      tutorId,
+      "booking",
+      "📅 Session Confirmed",
+      `You have confirmed a session for ${booking.subject} on ${booking.day} at ${booking.time}. Google Meet link: ${meetLink}`
     );
   } else if (status === "cancelled") {
     // Notify the other party about the cancellation
