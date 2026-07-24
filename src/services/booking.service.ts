@@ -7,6 +7,7 @@ import {
   findBookingsByTutorId,
   updateBookingStatus,
   processStaleBookings,
+  calculateSessionDate,
 } from "../repositories/booking.repository";
 import { findTutorProfileByUserId } from "../repositories/tutor.repository";
 import { findUserById } from "../repositories/user.repository";
@@ -37,6 +38,7 @@ const formatBooking = (booking: any) => {
     notes: booking.notes,
     cancelReason: booking.cancelReason,
     createdAt: booking.createdAt,
+    sessionDate: calculateSessionDate(booking.createdAt, booking.day, booking.time).toISOString(),
     meetLink: booking.meetLink,
   };
 };
@@ -146,6 +148,11 @@ export const changeBookingStatus = async (
     throw new HttpException(400, `Cannot change status of a ${booking.status} booking`);
   }
 
+  // Expired bookings cannot be changed by either party
+  if (booking.status === "expired") {
+    throw new HttpException(400, "This session has already expired and cannot be updated");
+  }
+
   if (role === "student" && status !== "cancelled") {
     throw new HttpException(403, "Students can only cancel bookings");
   }
@@ -169,16 +176,22 @@ export const changeBookingStatus = async (
       const student = await findUserById(studentId);
       const tutor = await findUserById(tutorId);
 
-      const meetSession = await createMeetSession(
-        student?.fullName || "Student",
-        tutor?.fullName || "Tutor",
-        booking.subject,
-        booking.day,
-        booking.time,
-        student?.email,
-        tutor?.email
-      );
-      meetLink = meetSession.meetLink;
+      // Race the Google Calendar call against a 10-second timeout
+      const meetSession = await Promise.race([
+        createMeetSession(
+          student?.fullName || "Student",
+          tutor?.fullName || "Tutor",
+          booking.subject,
+          booking.day,
+          booking.time,
+          student?.email,
+          tutor?.email
+        ),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Google Calendar API timeout after 10s")), 10000)
+        ),
+      ]);
+      meetLink = (meetSession as any).meetLink;
       console.log(`[Google Calendar] Meet link created: ${meetLink}`);
     } catch (err: any) {
       // Fall back to a placeholder link so booking still completes

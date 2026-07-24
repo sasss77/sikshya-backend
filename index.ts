@@ -1,5 +1,8 @@
 import "dotenv/config";
 import http from "http";
+import dns from "dns";
+// Force Node to use IPv4 first to prevent "failed to fetch" errors with external APIs like Groq
+dns.setDefaultResultOrder("ipv4first");
 import { Server as SocketIOServer } from "socket.io";
 import jwt from "jsonwebtoken";
 import { connectDB } from "./src/database/mongodb";
