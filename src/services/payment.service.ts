@@ -318,7 +318,7 @@ export const createPaymentIntent = async (
     amount: priceInCents,
     currency: "usd",
     customer: customerId,
-    automatic_payment_methods: { enabled: true },
+    payment_method_types: ["card"],
     metadata: {
       studentId,
       tutorId: data.tutorId,
