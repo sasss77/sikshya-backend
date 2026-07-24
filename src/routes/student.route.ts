@@ -3,6 +3,7 @@ import {
   verifyStudentController,
   getStudentProfileController,
   getStudentDashboardController,
+  getStudentByIdController,
 } from "../controllers/student.controller";
 import { authorizedMiddleware } from "../middlewares/authorized.middleware";
 
@@ -29,5 +30,12 @@ router.get("/profile", authorizedMiddleware, getStudentProfileController);
  * Protected: Bearer token required
  */
 router.get("/dashboard", authorizedMiddleware, getStudentDashboardController);
+
+/**
+ * GET STUDENT BY ID
+ * GET /api/students/:id
+ * Public or Protected
+ */
+router.get("/:id", authorizedMiddleware, getStudentByIdController);
 
 export default router;

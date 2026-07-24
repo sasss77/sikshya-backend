@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getAllTutors,
   getTutorById,
+  getBookedSlots,
   getMyProfile,
   saveTutorProfileController,
   getMyCoursesController,
@@ -66,6 +67,12 @@ router.delete("/courses/:courseId/modules/:moduleIndex/contents/:contentIndex", 
 
 /** POST /api/tutors/upload-content — upload file */
 router.post("/upload-content", authorizedMiddleware, uploadCourseContent, uploadCourseContentController);
+
+/**
+ * GET BOOKED SLOTS FOR A TUTOR
+ * GET /api/tutors/:id/booked-slots
+ */
+router.get("/:id/booked-slots", getBookedSlots);
 
 /**
  * GET A SPECIFIC TUTOR'S PUBLIC PROFILE

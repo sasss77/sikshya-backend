@@ -149,3 +149,27 @@ export const getStudentDashboard = async (userId: string) => {
     }))
   };
 };
+
+/**
+ * GET PUBLIC STUDENT PROFILE
+ * Returns the public profile of a student for tutors to view.
+ */
+export const getPublicStudentProfile = async (userId: string) => {
+  const user = await findUserById(userId);
+  if (!user || user.role !== "student") {
+    throw new HttpException(404, "Student not found");
+  }
+
+  const profile = await findStudentProfileByUserId(userId);
+
+  return {
+    id: user._id,
+    fullName: user.fullName,
+    profileImage: user.profileImage || null,
+    institution: profile?.institution || "Unknown Institution",
+    gradeLevel: profile?.gradeLevel || "Unknown",
+    subjects: profile?.subjects || [],
+    bio: profile?.bio || "No bio provided.",
+    joinedAt: (user as any).createdAt,
+  };
+};

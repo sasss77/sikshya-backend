@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { bookSession, getMyBookings, changeBookingStatus } from "../services/booking.service";
-import { getMyLearnings, toggleTopic } from "../services/enrollment.service";
+import { getMyLearnings, toggleTopic, addCourseToLearnings, getEnrollmentDetail, markModuleRead } from "../services/enrollment.service";
 
 /**
  * CREATE BOOKING
@@ -128,6 +128,75 @@ export const toggleTopicController = async (
       message: "Topic updated successfully",
       data: result,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+/**
+ * ADD COURSE TO LEARNINGS
+ * POST /api/bookings/enroll
+ * Protected: student only
+ * Body: { tutorId, courseId }
+ */
+export const addCourseController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const studentId = req.user!._id.toString();
+    const { tutorId, courseId } = req.body;
+    if (!tutorId || !courseId) {
+      res.status(400).json({ success: false, message: "tutorId and courseId are required" });
+      return;
+    }
+    const result = await addCourseToLearnings(studentId, tutorId, courseId);
+    res.status(201).json({ success: true, message: "Course added to your learnings!", data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET ENROLLMENT DETAIL
+ * GET /api/bookings/learnings/:enrollmentId
+ * Protected: student only
+ */
+export const getEnrollmentDetailController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const studentId = req.user!._id.toString();
+    const result = await getEnrollmentDetail(String(req.params.enrollmentId), studentId);
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * MARK MODULE AS READ
+ * PATCH /api/bookings/learnings/:enrollmentId/module
+ * Protected: student only
+ * Body: { moduleTitle: string, totalModules: number }
+ */
+export const markModuleController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const studentId = req.user!._id.toString();
+    const { enrollmentId } = req.params;
+    const { moduleTitle, totalModules } = req.body;
+    if (!moduleTitle || typeof totalModules !== "number") {
+      res.status(400).json({ success: false, message: "moduleTitle and totalModules are required" });
+      return;
+    }
+    const result = await markModuleRead(String(enrollmentId), moduleTitle, studentId, totalModules);
+    res.status(200).json({ success: true, message: "Module updated", data: result });
   } catch (error) {
     next(error);
   }

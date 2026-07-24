@@ -25,13 +25,16 @@ export const updateUserById = async (id: string, data: Record<string, any>) => {
   );
 };
 
-export const findPaginatedUsers = async (page: number, limit: number, search: string) => {
+export const findPaginatedUsers = async (page: number, limit: number, search: string, role?: string) => {
   const query: any = {};
   if (search) {
     query.$or = [
       { fullName: { $regex: search, $options: "i" } },
       { email: { $regex: search, $options: "i" } },
     ];
+  }
+  if (role) {
+    query.role = role;
   }
 
   const skip = (page - 1) * limit;
@@ -50,9 +53,9 @@ export const findPaginatedUsers = async (page: number, limit: number, search: st
       updatedAt: (user as any).updatedAt,
     })),
     meta: {
-      page,
-      limit,
-      total,
+      currentPage: page,
+      itemsPerPage: limit,
+      totalItems: total,
       totalPages: Math.ceil(total / limit),
     }
   };

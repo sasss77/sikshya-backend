@@ -4,6 +4,8 @@ import {
   readNotification,
   readAllNotifications,
   clearNotifications,
+  getMyStudents,
+  sendTutorNotificationToStudent,
 } from "../services/notification.service";
 
 export const getNotificationsController = async (
@@ -74,6 +76,36 @@ export const clearAllController = async (
       success: true,
       message: "All notifications cleared",
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/** GET /api/notifications/my-students — tutor fetches their students */
+export const getMyStudentsController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const tutorId = req.user!._id.toString();
+    const students = await getMyStudents(tutorId);
+    res.status(200).json({ success: true, message: "Students fetched", data: students });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/** POST /api/notifications/send — tutor sends a notification to a student */
+export const sendNotificationController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const tutorId = req.user!._id.toString();
+    const result = await sendTutorNotificationToStudent(tutorId, req.body);
+    res.status(201).json({ success: true, message: "Notification sent", data: result });
   } catch (error) {
     next(error);
   }

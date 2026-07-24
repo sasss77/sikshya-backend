@@ -4,6 +4,8 @@ import {
   login,
   whoami,
   updateProfile,
+  googleLogin,
+  setRole,
 } from "../controllers/user.controller";
 import { authorizedMiddleware } from "../middlewares/authorized.middleware";
 import { uploadProfileImage } from "../middlewares/upload.middleware";
@@ -21,6 +23,18 @@ router.post("/register", register);
   POST /api/users/login
  */
 router.post("/login", login);
+
+/**
+  GOOGLE LOGIN
+  POST /api/users/google-login
+ */
+router.post("/google-login", googleLogin);
+
+/**
+  SET USER ROLE (For unassigned users)
+  POST /api/users/set-role
+ */
+router.post("/set-role", authorizedMiddleware, setRole);
 
 /**
   WHO AM I — View logged-in user details

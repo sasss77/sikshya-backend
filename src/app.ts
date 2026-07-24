@@ -9,6 +9,10 @@ import studentRoutes from "./routes/student.route";
 import tutorRoutes from "./routes/tutor.route";
 import bookingRoutes from "./routes/booking.route";
 import notificationRoutes from "./routes/notification.route";
+import chatRoutes from "./routes/chat.route";
+import aiRoutes from "./routes/ai.route";
+import reviewRoutes from "./routes/review.route";
+import googleAuthRoutes from "./routes/google-auth.route";
 import { errorMiddleware } from "./middlewares/errror.middleware";
 
 const app = express();
@@ -42,6 +46,10 @@ app.use("/api/students", studentRoutes);
 app.use("/api/tutors", tutorRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/google", googleAuthRoutes);
 
 /**
  * Global Error Handler (MUST be last)

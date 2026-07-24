@@ -52,7 +52,7 @@ const fileFilter = (
 export const uploadProfileImage = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
 }).single("profileImage");
 
 /**

@@ -12,6 +12,8 @@ export interface IUserDocument extends Document {
   phoneNumber?: string;
   profileImage?: string;
   isVerifiedStudent: boolean;
+  isVerifiedAdmin: boolean;
+  googleId?: string;
 }
 
 //  schema
@@ -34,13 +36,12 @@ const userSchema = new Schema<IUserDocument>(
 
     role: {
       type: String,
-      enum: ["student", "tutor", "admin"],
+      enum: ["student", "tutor", "admin", "unassigned"],
       required: true,
     },
 
     password: {
       type: String,
-      required: true,
       minlength: 8,
     },
 
@@ -58,6 +59,18 @@ const userSchema = new Schema<IUserDocument>(
     isVerifiedStudent: {
       type: Boolean,
       default: false,
+    },
+
+    isVerifiedAdmin: {
+      type: Boolean,
+      default: false,
+    },
+
+    googleId: {
+      type: String,
+      default: null,
+      unique: true,
+      sparse: true,
     },
   },
   {
