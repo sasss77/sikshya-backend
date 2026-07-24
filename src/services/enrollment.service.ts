@@ -21,11 +21,15 @@ export const createEnrollmentFromBooking = async (booking: any) => {
   // Fetch tutor profile to get course topics
   const tutorProfile = await findTutorProfileByUserId(tutorId);
 
+  if (!tutorProfile) {
+    console.warn(`[createEnrollmentFromBooking] Tutor profile not found for tutorId: ${tutorId}`);
+  }
+
   // Try to find a matching course for the booked subject or courseId
   let topics: { label: string; done: boolean }[] = [];
   let courseId: string | undefined;
 
-  if (tutorProfile && tutorProfile.courses.length > 0) {
+  if (tutorProfile && tutorProfile.courses && tutorProfile.courses.length > 0) {
     let matchedCourse;
 
     if (booking.courseId) {

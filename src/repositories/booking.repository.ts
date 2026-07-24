@@ -109,7 +109,7 @@ export function calculateSessionDate(createdAt: Date, dayStr: string, timeStr: s
   return sessionDate;
 }
 
-function calculateSessionEndTime(createdAt: Date, dayStr: string, timeStr: string, durationStr: string = "60 min"): Date {
+export function calculateSessionEndTime(createdAt: Date, dayStr: string, timeStr: string, durationStr: string = "60 min"): Date {
   const sessionDate = calculateSessionDate(createdAt, dayStr, timeStr);
 
   // expire exactly 2 hours AFTER the session start time (date day and time)
@@ -118,21 +118,7 @@ function calculateSessionEndTime(createdAt: Date, dayStr: string, timeStr: strin
   return sessionDate;
 }
 
-export const processStaleBookings = async () => {
-  const activeBookings = await BookingModel.find({ status: { $in: ["pending", "upcoming"] } });
-  const now = new Date();
-  
-  for (const booking of activeBookings) {
-    const endTime = calculateSessionEndTime(booking.createdAt, booking.day, booking.time, booking.duration);
-    console.log(`[Stale Check] Booking ${booking._id}: Created at ${booking.createdAt}, Target Day ${booking.day}, Target Time ${booking.time}`);
-    console.log(`[Stale Check] Computed End Time: ${endTime.toISOString()}, Now: ${now.toISOString()}`);
-    if (now > endTime) {
-      console.log(`[Stale Check] Expiring booking ${booking._id} because it's past end time.`);
-      // Both pending and upcoming that passed get marked as expired
-      await BookingModel.updateOne({ _id: booking._id }, { $set: { status: "expired" } });
-    }
-  }
-};
+
 
 /**
  * Find all unique students that have an accepted (upcoming/completed) booking with a tutor.

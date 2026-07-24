@@ -6,9 +6,10 @@ import {
   findBookingsByStudentId,
   findBookingsByTutorId,
   updateBookingStatus,
-  processStaleBookings,
   calculateSessionDate,
+  calculateSessionEndTime,
 } from "../repositories/booking.repository";
+import { BookingModel } from "../models/booking.model";
 import { findTutorProfileByUserId } from "../repositories/tutor.repository";
 import { findUserById } from "../repositories/user.repository";
 import { createEnrollmentFromBooking } from "./enrollment.service";
@@ -105,13 +106,38 @@ export const bookSession = async (studentId: string, data: unknown) => {
   return formatBooking(booking);
 };
 
+export const handleStaleBookings = async () => {
+  const activeBookings = await BookingModel.find({ status: { $in: ["pending", "upcoming"] } });
+  const now = new Date();
+  
+  for (const booking of activeBookings) {
+    const endTime = calculateSessionEndTime(booking.createdAt, booking.day, booking.time, booking.duration);
+    if (now > endTime) {
+      if (booking.status === "pending") {
+        let paymentStatus = booking.paymentStatus;
+        if (booking.paymentStatus === "paid" && booking.stripePaymentIntentId) {
+          try {
+            await refundPayment(booking.stripePaymentIntentId);
+            paymentStatus = "refunded";
+          } catch (err) {
+            console.error("Failed to refund expired pending booking", err);
+          }
+        }
+        await BookingModel.updateOne({ _id: booking._id }, { $set: { status: "expired", paymentStatus } });
+      } else if (booking.status === "upcoming") {
+        await BookingModel.updateOne({ _id: booking._id }, { $set: { status: "completed" } });
+      }
+    }
+  }
+};
+
 /**
  * GET MY BOOKINGS
  * Returns bookings for the logged-in user (student or tutor).
  */
 export const getMyBookings = async (userId: string, role: string) => {
   // Lazily expire stale pending and upcoming bookings
-  await processStaleBookings();
+  await handleStaleBookings();
 
   const bookings =
     role === "tutor"
