@@ -50,10 +50,12 @@ export const findBookingsByTutorId = async (tutorId: string) => {
 export const updateBookingStatus = async (
   id: string,
   status: string,
-  cancelReason?: string
+  cancelReason?: string,
+  meetLink?: string
 ) => {
   const update: Record<string, any> = { status };
   if (cancelReason) update.cancelReason = cancelReason;
+  if (meetLink) update.meetLink = meetLink;
 
   return await BookingModel.findByIdAndUpdate(id, { $set: update }, { new: true });
 };

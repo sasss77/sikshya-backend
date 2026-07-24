@@ -1,4 +1,4 @@
-import dotenv from "dotenv";
+import "dotenv/config";
 import http from "http";
 import { Server as SocketIOServer } from "socket.io";
 import jwt from "jsonwebtoken";
@@ -6,7 +6,6 @@ import { connectDB } from "./src/database/mongodb";
 import app from "./src/app";
 import { saveMessage, findOrCreateRoom, markRoomMessagesRead } from "./src/repositories/chat.repository";
 
-dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
@@ -70,7 +69,7 @@ io.on("connection", (socket) => {
       const message = await saveMessage({ roomId, senderId: userId, receiverId, content: content.trim() });
 
       const payload = {
-        id: message._id,
+        id: message._id.toString(),
         roomId,
         senderId: userId,
         receiverId,
@@ -89,6 +88,7 @@ io.on("connection", (socket) => {
           roomId,
           senderId: userId,
           content: message.content,
+          createdAt: message.createdAt,
         });
       }
     } catch (err) {

@@ -37,6 +37,7 @@ const formatBooking = (booking: any) => {
     notes: booking.notes,
     cancelReason: booking.cancelReason,
     createdAt: booking.createdAt,
+    meetLink: booking.meetLink,
   };
 };
 
@@ -163,7 +164,14 @@ export const changeBookingStatus = async (
     throw new HttpException(400, "Can only complete upcoming bookings");
   }
 
-  const updated = await updateBookingStatus(bookingId, status, cancelReason);
+  let meetLink: string | undefined = undefined;
+  if (status === "upcoming") {
+    // Generate a simulated Google Meet link: e.g. abc-defg-hij
+    const randomSegment = (len: number) => Math.random().toString(36).substring(2, 2 + len);
+    meetLink = `https://meet.google.com/${randomSegment(3)}-${randomSegment(4)}-${randomSegment(3)}`;
+  }
+
+  const updated = await updateBookingStatus(bookingId, status, cancelReason, meetLink);
 
   // Auto-create enrollment when tutor accepts
   if (status === "upcoming") {
