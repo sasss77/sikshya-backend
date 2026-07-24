@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { registerUser, loginUser, getMyProfile, updateMyProfile } from "../services/user.service";
+import { registerUser, loginUser, getMyProfile, updateMyProfile, googleLoginUser, setUserRole } from "../services/user.service";
 
 /**
   REGISTER CONTROLLER
@@ -90,6 +90,63 @@ export const updateProfile = async (
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GOOGLE LOGIN CONTROLLER
+ * POST /api/users/google-login
+ */
+export const googleLogin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(400).json({ success: false, message: "idToken is required" });
+    }
+
+    const result = await googleLoginUser(idToken);
+
+    res.status(200).json({
+      success: true,
+      message: result.user.role === "unassigned" ? "Please select a role" : "Google login successful",
+      data: result,
+      requiresRoleSelection: result.user.role === "unassigned",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * SET ROLE CONTROLLER
+ * POST /api/users/set-role
+ * Protected by auth middleware
+ */
+export const setRole = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user!._id.toString();
+    const { role } = req.body;
+    if (!role) {
+      return res.status(400).json({ success: false, message: "role is required" });
+    }
+
+    const result = await setUserRole(userId, role);
+
+    res.status(200).json({
+      success: true,
+      message: "Role assigned successfully",
       data: result,
     });
   } catch (error) {
