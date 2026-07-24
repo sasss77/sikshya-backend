@@ -1,4 +1,5 @@
 import { EnrollmentModel } from "../models/enrollment.model";
+import { updateBookingStatus } from "./booking.repository";
 import mongoose from "mongoose";
 
 /**
@@ -73,9 +74,16 @@ export const toggleModuleCompleted = async (
   const done = enrollment.completedModules.length;
   enrollment.progress = totalModules > 0 ? Math.round((done / totalModules) * 100) : 0;
 
-  if (enrollment.progress === 100) enrollment.status = "completed";
-  else if (enrollment.progress > 0) enrollment.status = "in_progress";
-  else enrollment.status = "not_started";
+  if (enrollment.progress === 100) {
+    enrollment.status = "completed";
+    if (enrollment.bookingId) {
+      await updateBookingStatus(enrollment.bookingId.toString(), "completed");
+    }
+  } else if (enrollment.progress > 0) {
+    enrollment.status = "in_progress";
+  } else {
+    enrollment.status = "not_started";
+  }
 
   return await enrollment.save();
 };

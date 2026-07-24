@@ -9,6 +9,9 @@ export const createReview = async (
   try {
     const studentId = req.user!._id.toString(); // from auth middleware
     const { tutorId, targetType, rating, reviewText, courseId, bookingId } = req.body;
+    
+    console.log("== [CREATE REVIEW] ==");
+    console.log("Payload:", { studentId, tutorId, targetType, rating, reviewText, courseId, bookingId });
 
     const review = await reviewService.createReview(
       studentId,
@@ -26,6 +29,7 @@ export const createReview = async (
       data: review,
     });
   } catch (error) {
+    console.error("== [CREATE REVIEW ERROR] ==", error);
     next(error);
   }
 };
