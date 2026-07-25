@@ -21,11 +21,16 @@ export const updateUserById = async (id: string, data: Record<string, any>) => {
   return await UserModel.findByIdAndUpdate(
     id,
     { $set: data },
-    { new: true, runValidators: true }
+    { returnDocument: "after", runValidators: true },
   );
 };
 
-export const findPaginatedUsers = async (page: number, limit: number, search: string, role?: string) => {
+export const findPaginatedUsers = async (
+  page: number,
+  limit: number,
+  search: string,
+  role?: string,
+) => {
   const query: any = {};
   if (search) {
     query.$or = [
@@ -39,10 +44,13 @@ export const findPaginatedUsers = async (page: number, limit: number, search: st
 
   const skip = (page - 1) * limit;
   const total = await UserModel.countDocuments(query);
-  const users = await UserModel.find(query).skip(skip).limit(limit).sort({ createdAt: -1 });
+  const users = await UserModel.find(query)
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 });
 
   return {
-    data: users.map(user => ({
+    data: users.map((user) => ({
       id: user._id,
       fullName: user.fullName,
       email: user.email,
@@ -57,7 +65,7 @@ export const findPaginatedUsers = async (page: number, limit: number, search: st
       itemsPerPage: limit,
       totalItems: total,
       totalPages: Math.ceil(total / limit),
-    }
+    },
   };
 };
 

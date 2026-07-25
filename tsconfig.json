@@ -5,6 +5,11 @@
     "outDir": "dist",
     "esModuleInterop": true,
     "strict": false,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "types": ["node", "jest"],
+    "rootDir": "."
+  },
+  "include": ["src", "tests"],
+  "exclude": ["node_modules", "dist"]
 }
