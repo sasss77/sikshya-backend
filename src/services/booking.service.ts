@@ -13,7 +13,8 @@ import { findTutorProfileByUserId } from "../repositories/tutor.repository";
 import { findUserById } from "../repositories/user.repository";
 import { createEnrollmentFromBooking } from "./enrollment.service";
 import { notifyUser } from "./notification.service";
-import { createMeetSession } from "./google-calendar.service";
+import { createMeetSession, deleteMeetSession } from "./google-calendar.service";
+import { refundPayment } from "./payment.service";
 
 /**
  * Helper to format a booking document into a clean response
@@ -34,7 +35,10 @@ const formatBooking = (booking: any) => {
     time: booking.time,
     duration: booking.duration,
     price: booking.price,
+    priceUSD: booking.priceUSD || 0,
     status: booking.status,
+    paymentStatus: booking.paymentStatus || "unpaid",
+    stripePaymentIntentId: booking.stripePaymentIntentId,
     notes: booking.notes,
     cancelReason: booking.cancelReason,
     createdAt: booking.createdAt,
@@ -42,6 +46,7 @@ const formatBooking = (booking: any) => {
     meetLink: booking.meetLink,
   };
 };
+
 
 /**
  * CREATE BOOKING
@@ -171,6 +176,8 @@ export const changeBookingStatus = async (
   }
 
   let meetLink: string | undefined = undefined;
+  let googleCalendarEventId: string | undefined = undefined;
+
   if (status === "upcoming") {
     try {
       const student = await findUserById(studentId);
@@ -192,6 +199,7 @@ export const changeBookingStatus = async (
         ),
       ]);
       meetLink = (meetSession as any).meetLink;
+      googleCalendarEventId = (meetSession as any).calendarEventId;
       console.log(`[Google Calendar] Meet link created: ${meetLink}`);
     } catch (err: any) {
       // Fall back to a placeholder link so booking still completes
@@ -201,7 +209,31 @@ export const changeBookingStatus = async (
     }
   }
 
-  const updated = await updateBookingStatus(bookingId, status, cancelReason, meetLink);
+  // Handle Refunds and Calendar Cleanup on Cancellation
+  let paymentStatus = booking.paymentStatus;
+  if (status === "cancelled") {
+    if (booking.paymentStatus === "paid" && booking.stripePaymentIntentId) {
+      try {
+        await refundPayment(booking.stripePaymentIntentId);
+        paymentStatus = "refunded";
+      } catch (err) {
+        console.error("Failed to refund during cancellation", err);
+      }
+    }
+
+    if (booking.googleCalendarEventId) {
+      await deleteMeetSession(booking.googleCalendarEventId);
+    }
+  }
+
+  const updated = await updateBookingStatus(
+    bookingId, 
+    status, 
+    cancelReason, 
+    meetLink, 
+    googleCalendarEventId, 
+    paymentStatus
+  );
 
   // Auto-create enrollment when tutor accepts
   if (status === "upcoming") {

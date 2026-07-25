@@ -51,11 +51,15 @@ export const updateBookingStatus = async (
   id: string,
   status: string,
   cancelReason?: string,
-  meetLink?: string
+  meetLink?: string,
+  googleCalendarEventId?: string,
+  paymentStatus?: string
 ) => {
   const update: Record<string, any> = { status };
   if (cancelReason) update.cancelReason = cancelReason;
   if (meetLink) update.meetLink = meetLink;
+  if (googleCalendarEventId) update.googleCalendarEventId = googleCalendarEventId;
+  if (paymentStatus) update.paymentStatus = paymentStatus;
 
   return await BookingModel.findByIdAndUpdate(id, { $set: update }, { new: true });
 };
