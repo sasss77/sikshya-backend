@@ -13,11 +13,22 @@ import chatRoutes from "./routes/chat.route";
 import aiRoutes from "./routes/ai.route";
 import reviewRoutes from "./routes/review.route";
 import googleAuthRoutes from "./routes/google-auth.route";
+import paymentRoutes from "./routes/payment.route";
 import { errorMiddleware } from "./middlewares/errror.middleware";
 
 const app = express();
 
 app.use(cors());
+
+/**
+ * IMPORTANT: Raw body parser for Stripe webhook MUST come before express.json().
+ * Stripe requires the raw request body to verify its signature.
+ */
+app.use(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" })
+);
+
 app.use(express.json());
 app.use(morgan("dev"));
 
@@ -50,6 +61,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/google", googleAuthRoutes);
+app.use("/api/payments", paymentRoutes);
 
 /**
  * Global Error Handler (MUST be last)
