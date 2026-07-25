@@ -5,7 +5,7 @@ import {
   findStudentProfileByUserId,
 } from "../repositories/student.repository";
 import { findUserById, updateUserById } from "../repositories/user.repository";
-import { findBookingsByStudentId } from "../repositories/booking.repository";
+import { findBookingsByStudentId, processStaleBookings, calculateSessionDate } from "../repositories/booking.repository";
 import { findEnrollmentsByStudentId } from "../repositories/enrollment.repository";
 import { findNotificationsByUserId } from "../repositories/notification.repository";
 
@@ -100,6 +100,9 @@ export const getStudentProfile = async (userId: string) => {
  * Returns aggregated data for the student dashboard.
  */
 export const getStudentDashboard = async (userId: string) => {
+  // Expire stale bookings before aggregating dashboard data
+  await processStaleBookings();
+
   const bookings = await findBookingsByStudentId(userId);
   const enrollments = await findEnrollmentsByStudentId(userId);
   const notifications = await findNotificationsByUserId(userId);
@@ -127,7 +130,7 @@ export const getStudentDashboard = async (userId: string) => {
       tutor: b.tutorId?.fullName || "Unknown",
       initials: (b.tutorId?.fullName || "U").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2),
       subject: b.subject,
-      date: b.day,
+      date: calculateSessionDate(b.createdAt, b.day, b.time).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }),
       time: b.time,
       duration: b.duration,
       color: "#0B4085" // Mock color

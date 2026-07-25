@@ -14,6 +14,8 @@ export interface IUserDocument extends Document {
   isVerifiedStudent: boolean;
   isVerifiedAdmin: boolean;
   googleId?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 //  schema

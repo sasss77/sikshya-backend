@@ -52,7 +52,7 @@ export const getChatRooms = async (req: Request, res: Response, next: NextFuncti
  */
 export const getChatMessages = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { roomId } = req.params;
+    const roomId = req.params.roomId as string;
     const page = parseInt(req.query.page as string) || 1;
     const userId = req.user!._id.toString();
 

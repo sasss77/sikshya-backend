@@ -7,12 +7,14 @@ import {
   findBookingsByTutorId,
   updateBookingStatus,
   processStaleBookings,
+  calculateSessionDate,
 } from "../repositories/booking.repository";
 import { findTutorProfileByUserId } from "../repositories/tutor.repository";
 import { findUserById } from "../repositories/user.repository";
 import { createEnrollmentFromBooking } from "./enrollment.service";
 import { notifyUser } from "./notification.service";
-import { createMeetSession } from "./google-calendar.service";
+import { createMeetSession, deleteMeetSession } from "./google-calendar.service";
+import { refundPayment } from "./payment.service";
 
 /**
  * Helper to format a booking document into a clean response
@@ -33,13 +35,19 @@ const formatBooking = (booking: any) => {
     time: booking.time,
     duration: booking.duration,
     price: booking.price,
+    priceUSD: booking.priceUSD || 0,
     status: booking.status,
+    paymentStatus: booking.paymentStatus || "unpaid",
+    stripePaymentIntentId: booking.stripePaymentIntentId,
     notes: booking.notes,
     cancelReason: booking.cancelReason,
     createdAt: booking.createdAt,
+    sessionDate: calculateSessionDate(booking.createdAt, booking.day, booking.time).toISOString(),
     meetLink: booking.meetLink,
+    rating: booking.rating || null,
   };
 };
+
 
 /**
  * CREATE BOOKING
@@ -146,6 +154,11 @@ export const changeBookingStatus = async (
     throw new HttpException(400, `Cannot change status of a ${booking.status} booking`);
   }
 
+  // Expired bookings cannot be changed by either party
+  if (booking.status === "expired") {
+    throw new HttpException(400, "This session has already expired and cannot be updated");
+  }
+
   if (role === "student" && status !== "cancelled") {
     throw new HttpException(403, "Students can only cancel bookings");
   }
@@ -164,21 +177,30 @@ export const changeBookingStatus = async (
   }
 
   let meetLink: string | undefined = undefined;
+  let googleCalendarEventId: string | undefined = undefined;
+
   if (status === "upcoming") {
     try {
       const student = await findUserById(studentId);
       const tutor = await findUserById(tutorId);
 
-      const meetSession = await createMeetSession(
-        student?.fullName || "Student",
-        tutor?.fullName || "Tutor",
-        booking.subject,
-        booking.day,
-        booking.time,
-        student?.email,
-        tutor?.email
-      );
-      meetLink = meetSession.meetLink;
+      // Race the Google Calendar call against a 10-second timeout
+      const meetSession = await Promise.race([
+        createMeetSession(
+          student?.fullName || "Student",
+          tutor?.fullName || "Tutor",
+          booking.subject,
+          booking.day,
+          booking.time,
+          student?.email,
+          tutor?.email
+        ),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Google Calendar API timeout after 10s")), 10000)
+        ),
+      ]);
+      meetLink = (meetSession as any).meetLink;
+      googleCalendarEventId = (meetSession as any).calendarEventId;
       console.log(`[Google Calendar] Meet link created: ${meetLink}`);
     } catch (err: any) {
       // Fall back to a placeholder link so booking still completes
@@ -188,7 +210,31 @@ export const changeBookingStatus = async (
     }
   }
 
-  const updated = await updateBookingStatus(bookingId, status, cancelReason, meetLink);
+  // Handle Refunds and Calendar Cleanup on Cancellation
+  let paymentStatus = booking.paymentStatus;
+  if (status === "cancelled") {
+    if (booking.paymentStatus === "paid" && booking.stripePaymentIntentId) {
+      try {
+        await refundPayment(booking.stripePaymentIntentId);
+        paymentStatus = "refunded";
+      } catch (err) {
+        console.error("Failed to refund during cancellation", err);
+      }
+    }
+
+    if (booking.googleCalendarEventId) {
+      await deleteMeetSession(booking.googleCalendarEventId);
+    }
+  }
+
+  const updated = await updateBookingStatus(
+    bookingId, 
+    status, 
+    cancelReason, 
+    meetLink, 
+    googleCalendarEventId, 
+    paymentStatus
+  );
 
   // Auto-create enrollment when tutor accepts
   if (status === "upcoming") {

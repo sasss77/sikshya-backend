@@ -7,8 +7,8 @@ export const createReview = async (
   next: NextFunction
 ) => {
   try {
-    const studentId = req.user!.id; // from auth middleware
-    const { tutorId, targetType, rating, reviewText, courseId } = req.body;
+    const studentId = req.user!._id.toString(); // from auth middleware
+    const { tutorId, targetType, rating, reviewText, courseId, bookingId } = req.body;
 
     const review = await reviewService.createReview(
       studentId,
@@ -16,7 +16,8 @@ export const createReview = async (
       targetType,
       rating,
       reviewText,
-      courseId
+      courseId,
+      bookingId
     );
 
     res.status(201).json({
@@ -35,7 +36,7 @@ export const getTutorReviews = async (
   next: NextFunction
 ) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const limit = parseInt(req.query.limit as string) || 10;
     const reviews = await reviewService.getReviewsByTutor(id, limit);
 
@@ -54,7 +55,7 @@ export const getCourseReviews = async (
   next: NextFunction
 ) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const limit = parseInt(req.query.limit as string) || 10;
     const reviews = await reviewService.getReviewsByCourse(id, limit);
 

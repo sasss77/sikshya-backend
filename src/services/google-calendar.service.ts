@@ -167,3 +167,23 @@ export const createMeetSession = async (
     endDateTime: endDateTime.toISOString(),
   };
 };
+
+/**
+ * Delete a Google Calendar event by ID.
+ * Used when a booking is cancelled.
+ */
+export const deleteMeetSession = async (eventId: string) => {
+  const calendarId = process.env.GOOGLE_CALENDAR_ID || "primary";
+  try {
+    const calendar = getOAuthClient();
+    await calendar.events.delete({
+      calendarId,
+      eventId,
+    });
+    console.log(`[Google Calendar] Event ${eventId} deleted successfully`);
+    return true;
+  } catch (error: any) {
+    console.error(`[Google Calendar] Failed to delete event ${eventId}: ${error.message}`);
+    return false;
+  }
+};

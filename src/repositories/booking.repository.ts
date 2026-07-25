@@ -51,18 +51,32 @@ export const updateBookingStatus = async (
   id: string,
   status: string,
   cancelReason?: string,
-  meetLink?: string
+  meetLink?: string,
+  googleCalendarEventId?: string,
+  paymentStatus?: string
 ) => {
   const update: Record<string, any> = { status };
   if (cancelReason) update.cancelReason = cancelReason;
   if (meetLink) update.meetLink = meetLink;
+  if (googleCalendarEventId) update.googleCalendarEventId = googleCalendarEventId;
+  if (paymentStatus) update.paymentStatus = paymentStatus;
 
   return await BookingModel.findByIdAndUpdate(id, { $set: update }, { new: true });
 };
 
 const DAY_MAP: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
-function calculateSessionEndTime(createdAt: Date, dayStr: string, timeStr: string, durationStr: string = "60 min"): Date {
+export function calculateSessionDate(createdAt: Date, dayStr: string, timeStr: string): Date {
+  const DAY_MAP: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+
   const targetDay = DAY_MAP[dayStr] ?? 1;
   const createdDay = createdAt.getDay();
   let daysDiff = targetDay - createdDay;
@@ -78,10 +92,12 @@ function calculateSessionEndTime(createdAt: Date, dayStr: string, timeStr: strin
     if (period === "AM" && hours === 12) hours = 0;
   }
 
+  // If the target day is today, check if the time has already passed
   if (daysDiff === 0) {
     const createdTotalMinutes = createdAt.getHours() * 60 + createdAt.getMinutes();
     const targetTotalMinutes = hours * 60 + minutes;
     if (targetTotalMinutes < createdTotalMinutes) {
+      // Time has passed, assume they meant next week
       daysDiff = 7;
     }
   }
@@ -90,11 +106,14 @@ function calculateSessionEndTime(createdAt: Date, dayStr: string, timeStr: strin
   sessionDate.setDate(sessionDate.getDate() + daysDiff);
   sessionDate.setHours(hours, minutes, 0, 0);
 
-  const durationMatch = durationStr.match(/\d+/);
-  const durationMins = durationMatch ? parseInt(durationMatch[0], 10) : 60;
-  
-  // expire 1 hour AFTER the session ends
-  sessionDate.setMinutes(sessionDate.getMinutes() + durationMins + 60);
+  return sessionDate;
+}
+
+function calculateSessionEndTime(createdAt: Date, dayStr: string, timeStr: string, durationStr: string = "60 min"): Date {
+  const sessionDate = calculateSessionDate(createdAt, dayStr, timeStr);
+
+  // expire exactly 2 hours AFTER the session start time (date day and time)
+  sessionDate.setMinutes(sessionDate.getMinutes() + 120);
 
   return sessionDate;
 }

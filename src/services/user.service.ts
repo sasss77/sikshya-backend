@@ -223,7 +223,7 @@ export const googleLoginUser = async (accessToken: string) => {
   if (user) {
     // If user exists but doesn't have googleId linked, link it
     if (!user.googleId) {
-      await updateUserById(user._id as string, { googleId, ...(picture && !user.profileImage ? { profileImage: picture } : {}) });
+      await updateUserById(user._id.toString(), { googleId, ...(picture && !user.profileImage ? { profileImage: picture } : {}) });
       user.googleId = googleId;
       if (picture && !user.profileImage) user.profileImage = picture;
     }

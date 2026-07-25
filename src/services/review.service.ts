@@ -1,5 +1,6 @@
 import { ReviewModel } from "../models/review.model";
 import { TutorProfileModel } from "../models/tutor-profile.model";
+import { BookingModel } from "../models/booking.model";
 import { HttpException } from "../exceptions/http-exception";
 import mongoose from "mongoose";
 
@@ -9,7 +10,8 @@ export const createReview = async (
   targetType: "tutor" | "course",
   rating: number,
   reviewText: string,
-  courseId?: string
+  courseId?: string,
+  bookingId?: string
 ) => {
   if (rating < 1 || rating > 5) {
     throw new HttpException(400, "Rating must be between 1 and 5");
@@ -38,6 +40,11 @@ export const createReview = async (
 
   // Update average rating
   await updateAverageRating(tutorId, targetType, courseId);
+
+  // If a bookingId was provided, update the booking's rating
+  if (bookingId) {
+    await BookingModel.findByIdAndUpdate(bookingId, { rating });
+  }
 
   return review;
 };
