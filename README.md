@@ -45,7 +45,7 @@ A Node.js + TypeScript backend for the Sikshya tutoring marketplace. This API pr
 1. Clone the repository:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/sasss77/sikshya-backend.git
 cd backend
 ```
 
