@@ -29,6 +29,7 @@ export interface IBookingDocument extends Document {
   courseId?: mongoose.Types.ObjectId;
   meetLink?: string;
   googleCalendarEventId?: string;
+  rating?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -66,6 +67,7 @@ const bookingSchema = new Schema<IBookingDocument>(
     notes: { type: String, trim: true },
     cancelReason: { type: String, trim: true },
     googleCalendarEventId: { type: String, trim: true },
+    rating: { type: Number, min: 1, max: 5 },
     courseId: {
       type: Schema.Types.ObjectId,
       ref: "TutorProfile.courses",

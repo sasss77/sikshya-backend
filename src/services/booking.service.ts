@@ -44,6 +44,7 @@ const formatBooking = (booking: any) => {
     createdAt: booking.createdAt,
     sessionDate: calculateSessionDate(booking.createdAt, booking.day, booking.time).toISOString(),
     meetLink: booking.meetLink,
+    rating: booking.rating || null,
   };
 };
 
