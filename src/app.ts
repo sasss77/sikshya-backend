@@ -12,6 +12,7 @@ import notificationRoutes from "./routes/notification.route";
 import chatRoutes from "./routes/chat.route";
 import aiRoutes from "./routes/ai.route";
 import reviewRoutes from "./routes/review.route";
+import reportRoutes from "./routes/report.route";
 import googleAuthRoutes from "./routes/google-auth.route";
 import paymentRoutes from "./routes/payment.route";
 import { errorMiddleware } from "./middlewares/errror.middleware";
@@ -60,6 +61,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/reports", reportRoutes);
 app.use("/api/google", googleAuthRoutes);
 app.use("/api/payments", paymentRoutes);
 
