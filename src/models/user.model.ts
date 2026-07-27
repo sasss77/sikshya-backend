@@ -70,20 +70,16 @@ const userSchema = new Schema<IUserDocument>(
 
     googleId: {
       type: String,
-      default: null,
       unique: true,
       sparse: true,
     },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 /**
   Export model
  */
-export const UserModel = mongoose.model<IUserDocument>(
-  "User",
-  userSchema
-);
+export const UserModel = mongoose.model<IUserDocument>("User", userSchema);
