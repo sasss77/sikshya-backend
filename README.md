@@ -31,6 +31,10 @@ A Node.js + TypeScript backend for the Sikshya tutoring marketplace. This API pr
 - `src/seed.ts` - Seed script for creating a default admin user
 - `uploads/` - User-uploaded images and course files
 
+## Deployment
+
+- Backend is deployed at: `https://sikshya-backend.onrender.com`
+
 ## Prerequisites
 
 - Node.js 18+ (or compatible current LTS version)
