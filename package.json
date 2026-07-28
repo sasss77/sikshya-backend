@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "npx tsx --watch index.ts",
     "seed": "npx tsx src/seed.ts",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "test:coverage": "jest --coverage --runInBand --forceExit"
   },
   "keywords": [],
   "author": "",

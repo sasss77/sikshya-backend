@@ -175,7 +175,8 @@ export const createMeetSession = async (
 export const deleteMeetSession = async (eventId: string) => {
   const calendarId = process.env.GOOGLE_CALENDAR_ID || "primary";
   try {
-    const calendar = getOAuthClient();
+    const auth = getOAuthClient();
+    const calendar = google.calendar({ version: "v3", auth });
     await calendar.events.delete({
       calendarId,
       eventId,

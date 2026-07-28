@@ -23,7 +23,7 @@ export const markNotificationAsRead = async (notificationId: string) => {
   return await NotificationModel.findByIdAndUpdate(
     notificationId,
     { $set: { read: true } },
-    { new: true }
+    { returnDocument: 'after' }
   );
 };
 

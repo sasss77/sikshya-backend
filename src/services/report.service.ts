@@ -36,6 +36,6 @@ export const updateReportStatus = async (
   return await ReportModel.findByIdAndUpdate(
     reportId,
     { status },
-    { new: true }
+    { returnDocument: "after" }
   ).populate("reporterId", "fullName email").populate("reportedUserId", "fullName email");
 };

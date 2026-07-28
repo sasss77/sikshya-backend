@@ -110,7 +110,7 @@ export const updateCourseInDB = async (
       "courses._id": new mongoose.Types.ObjectId(courseId),
     },
     { $set: setFields },
-    { new: true }
+    { returnDocument: 'after' }
   );
 };
 
@@ -119,7 +119,7 @@ export const deleteCourseFromDB = async (userId: string, courseId: string) => {
   return await TutorProfileModel.findOneAndUpdate(
     { userId: new mongoose.Types.ObjectId(userId) },
     { $pull: { courses: { _id: new mongoose.Types.ObjectId(courseId) } } },
-    { new: true }
+    { returnDocument: 'after' }
   );
 };
 
@@ -135,7 +135,7 @@ export const addModuleToCourseInDB = async (
       "courses._id": new mongoose.Types.ObjectId(courseId),
     },
     { $push: { "courses.$.modules": module } },
-    { new: true }
+    { returnDocument: 'after' }
   );
 };
 

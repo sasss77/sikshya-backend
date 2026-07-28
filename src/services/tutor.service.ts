@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { TutorProfileSchema } from "../dtos/tutor.dto";
 import { HttpException } from "../exceptions/http-exception";
 import {
@@ -141,7 +142,6 @@ export const getMyCourses = async (userId: string) => {
 /** ADD a new course */
 export const addCourse = async (userId: string, data: unknown) => {
   await assertTutor(userId);
-  const { z } = await import("zod");
   const schema = z.object({
     title: z.string().min(2, "Title must be at least 2 characters"),
     subject: z.string().optional(),
@@ -159,7 +159,6 @@ export const addCourse = async (userId: string, data: unknown) => {
 /** UPDATE an existing course */
 export const updateCourse = async (userId: string, courseId: string, data: unknown) => {
   await assertTutor(userId);
-  const { z } = await import("zod");
   const schema = z.object({
     title: z.string().min(2).optional(),
     subject: z.string().optional(),
@@ -185,7 +184,6 @@ export const deleteCourse = async (userId: string, courseId: string) => {
 /** ADD a module to a course */
 export const addModule = async (userId: string, courseId: string, data: unknown) => {
   await assertTutor(userId);
-  const { z } = await import("zod");
   const schema = z.object({ title: z.string().min(1, "Module title is required") });
   const validated = schema.parse(data);
   const profile = await addModuleToCourseInDB(userId, courseId, validated);
@@ -217,7 +215,6 @@ export const addModuleContent = async (
   if (isNaN(moduleIndex) || moduleIndex < 0) {
     throw new HttpException(400, "Invalid module index");
   }
-  const { z } = await import("zod");
   const schema = z.object({
     type: z.enum(["pdf", "video", "text", "file"]),
     title: z.string().min(1, "Title is required"),
