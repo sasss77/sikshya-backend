@@ -238,6 +238,12 @@ export const changeBookingStatus = async (
 
   // Handle Refunds and Calendar Cleanup on Cancellation
   let paymentStatus = booking.paymentStatus;
+  
+  if (status === "upcoming") {
+    if (paymentStatus === "unpaid") {
+      paymentStatus = "paid";
+    }
+  }
   if (status === "cancelled") {
     if (booking.paymentStatus === "paid" && booking.stripePaymentIntentId) {
       try {
