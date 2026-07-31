@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { HttpException } from "../exceptions/http-exception";
 import {
   clearAllNotifications,
@@ -82,7 +83,6 @@ export const sendTutorNotificationToStudent = async (
   tutorId: string,
   data: { studentId: string; title: string; message: string; courseId?: string }
 ) => {
-  const { z } = await import("zod");
   const schema = z.object({
     studentId: z.string().min(1),
     title: z.string().min(1, "Title is required").max(100),

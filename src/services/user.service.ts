@@ -196,15 +196,21 @@ export const updateMyProfile = async (
  */
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-export const googleLoginUser = async (accessToken: string) => {
-  // 1. Fetch user info using the access token from Google's userinfo endpoint
+export const googleLoginUser = async (token: string) => {
+  // 1. Fetch user info using the token (supports both ID Token and Access Token)
   let googleUserInfo: { email?: string; name?: string; sub?: string; picture?: string };
   try {
-    const res = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+    const isIdToken = token.split('.').length === 3;
+    const url = isIdToken 
+      ? `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`
+      : `https://www.googleapis.com/oauth2/v3/userinfo`;
+      
+    const res = await fetch(url, {
+      headers: isIdToken ? undefined : { Authorization: `Bearer ${token}` },
     });
+    
     if (!res.ok) {
-      throw new Error(`Google userinfo fetch failed: ${res.status}`);
+      throw new Error(`Google token verification failed: ${res.status}`);
     }
     googleUserInfo = await res.json();
   } catch (err) {
@@ -240,7 +246,7 @@ export const googleLoginUser = async (accessToken: string) => {
   }
 
   // 4. Generate JWT
-  const token = jwt.sign(
+  const jwtToken = jwt.sign(
     {
       id: user._id,
       email: user.email,
@@ -251,7 +257,7 @@ export const googleLoginUser = async (accessToken: string) => {
   );
 
   return {
-    token,
+    token: jwtToken,
     user: {
       id: user._id,
       fullName: user.fullName,
@@ -260,6 +266,7 @@ export const googleLoginUser = async (accessToken: string) => {
       isVerifiedAdmin: user.email === process.env.ADMIN_EMAIL ? true : (user.isVerifiedAdmin ?? false),
       phoneNumber: user.phoneNumber ?? null,
       profileImage: user.profileImage ?? null,
+      requiresRoleSelection: user.role === "unassigned",
     },
   };
 };
@@ -277,7 +284,11 @@ export const setUserRole = async (userId: string, role: string) => {
   if (!user) throw new HttpException(404, "User not found");
   
   if (user.role !== "unassigned") {
-    throw new HttpException(400, "User already has a role assigned");
+    // If the user already has the requested role, just proceed to issue a new token
+    // This heals cases where the frontend session is out of sync with the backend.
+    if (user.role !== role) {
+      throw new HttpException(400, "User already has a role assigned");
+    }
   }
 
   // Admin accounts start with isVerifiedAdmin: false and need approval

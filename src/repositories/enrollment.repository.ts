@@ -121,6 +121,6 @@ export const updateEnrollmentProgress = async (
   return await EnrollmentModel.findByIdAndUpdate(
     enrollmentId,
     { $set: { completedSessions, nextSession } },
-    { new: true }
+    { returnDocument: 'after' }
   );
 };

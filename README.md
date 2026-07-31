@@ -200,6 +200,18 @@ npm run seed
 - `GET /api/v1/admin/users/courses` — Get all tutor courses
 - `GET /api/v1/admin/users/courses/:id` — Get course details by ID
 
+### Report Routes
+
+- `POST /api/reports` — Create a report against a user, tutor, or course
+- `GET /api/reports/admin` — List all reports (admin only)
+- `PATCH /api/reports/admin/:id` — Update report status (admin only)
+
+### Review Routes
+
+- `POST /api/reviews` — Submit a review for a tutor or course
+- `GET /api/reviews/tutor/:id` — Get public reviews for a tutor
+- `GET /api/reviews/course/:id` — Get public reviews for a course
+
 ## Socket.IO Events
 
 The backend exposes a Socket.IO server on the same port as the Express app.
@@ -227,7 +239,7 @@ Uploaded files are served from the `uploads/` directory at `/uploads`.
 
 - Stripe webhook requests require the raw request body; this is configured in `src/app.ts`.
 - The seed script will create a default admin account if it does not already exist.
-- The project currently does not include automated tests.
+- The project includes comprehensive automated tests for controllers and repositories using Jest and Supertest. To run the tests, use `npm test`. To verify code coverage (targets >80% for critical paths like controllers and repositories), use `npm run test:coverage`.
 
 ## License
 

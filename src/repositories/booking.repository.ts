@@ -61,7 +61,7 @@ export const updateBookingStatus = async (
   if (googleCalendarEventId) update.googleCalendarEventId = googleCalendarEventId;
   if (paymentStatus) update.paymentStatus = paymentStatus;
 
-  return await BookingModel.findByIdAndUpdate(id, { $set: update }, { new: true });
+  return await BookingModel.findByIdAndUpdate(id, { $set: update }, { returnDocument: "after" });
 };
 
 const DAY_MAP: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
@@ -131,5 +131,14 @@ export const findStudentsByTutorId = async (tutorId: string) => {
   })
     .populate("studentId", "fullName email profileImage")
     .sort({ createdAt: -1 });
+};
+
+export const processStaleBookings = async () => {
+  // Update pending bookings older than 24h to expired or cancelled
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  await BookingModel.updateMany(
+    { status: "pending", createdAt: { $lt: oneDayAgo } },
+    { $set: { status: "cancelled", cancelReason: "Expired due to no payment" } }
+  );
 };
 
